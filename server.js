@@ -9,6 +9,10 @@ const { xss } = require('express-xss-sanitizer')
 const rateLimit = require('express-rate-limit')
 const hpp = require('hpp')
 
+// Require swagger
+const swaggerJsdoc = require('swagger-jsdoc')
+const swaggerUI = require('swagger-ui-express')
+
 // Route files
 const hospitals = require('./routes/hospitals')
 const auth = require('./routes/auth')
@@ -27,6 +31,28 @@ const limiter = rateLimit({
     windowsMs: 10*60*1000, // equals 10 mins
     max: 100
 })
+
+// Define Swagger Options
+const swaggerOptions = {
+    swaggerDefinition: {
+        openapi: '3.0.0',
+        info: {
+            title: 'Library API',
+            version: '1.0.0',
+            description: 'A Simple Express VacQ API'
+        },
+        servers: [
+            {
+                url: 'http://localhost:8000/api/v1'
+            }
+        ]
+    },
+    apis: ['./routes/*.js']
+}
+
+// Use SwaggerDocs
+const swaggerDocs = swaggerJsdoc(swaggerOptions)
+app.use('/api-docs', swaggerUI.serve, swaggerUI.setup(swaggerDocs))
 
 // Enable CORS
 app.use(cors())
@@ -49,6 +75,8 @@ app.use(limiter)
 
 // Prevent http param pollutions
 app.use(hpp())
+
+
 
 
 // Mount routers
