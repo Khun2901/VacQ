@@ -3,6 +3,11 @@ const dotenv = require('dotenv')
 const cookieParser = require('cookie-parser')
 const connectDB = require('./config/db')
 const cors = require('cors')
+const mongoSanitize = require('express-mongo-sanitize')
+const helmet = require('helmet')
+const { xss } = require('express-xss-sanitizer')
+const rateLimit = require('express-rate-limit')
+const hpp = require('hpp')
 
 // Route files
 const hospitals = require('./routes/hospitals')
@@ -17,12 +22,33 @@ connectDB()
 
 const app = express()
 
-// Cors Blocking Issue
+// Define Rate Limiting
+const limiter = rateLimit({
+    windowsMs: 10*60*1000, // equals 10 mins
+    max: 100
+})
+
+// Enable CORS
 app.use(cors())
 
 // Body Parser
 app.use(express.json())
 app.use(cookieParser())
+
+// Sanitize Data
+app.use(mongoSanitize())
+
+// Set Security Headers
+app.use(helmet())
+
+// Prevent XSS Attacks
+app.use(xss())
+
+// Use Rate Limiters
+app.use(limiter)
+
+// Prevent http param pollutions
+app.use(hpp())
 
 
 // Mount routers
